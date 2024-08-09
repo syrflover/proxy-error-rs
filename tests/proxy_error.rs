@@ -3,7 +3,7 @@ extern crate proxy_error;
 mod target {
     use super::parent;
 
-    #[derive(Debug, thiserror::Error)]
+    #[derive(Debug, PartialEq, Eq, thiserror::Error)]
     pub enum Error {
         #[error("parent: {0}")]
         Parent(#[from] parent::Error),
@@ -37,7 +37,7 @@ mod parent {
 
     use super::{child, target};
 
-    #[derive(Debug, thiserror::Error)]
+    #[derive(Debug, PartialEq, Eq, thiserror::Error)]
     #[proxy_error(target::Error, Parent)]
     pub enum Error {
         #[error("child: {0}")]
@@ -46,7 +46,7 @@ mod parent {
 }
 
 mod child {
-    #[derive(Debug, thiserror::Error)]
+    #[derive(Debug, PartialEq, Eq, thiserror::Error)]
     pub enum Error {
         #[allow(dead_code)]
         #[error("some error")]
@@ -56,7 +56,9 @@ mod child {
 
 #[test]
 fn test() {
-    let err = target::Error::Parent(parent::Error::Child(child::Error::SomeError));
+    let err: target::Error = target::Error::Parent(parent::Error::Child(child::Error::SomeError));
+
+    assert_eq!(err, child::Error::SomeError.into());
 
     assert!(err.is::<child::Error>());
 
